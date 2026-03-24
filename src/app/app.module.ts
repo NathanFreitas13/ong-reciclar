@@ -4,11 +4,13 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { FirebaseModule } from '../firebase/firebase.module';
 import { StudentsModule } from '../modules/students/students.module';
+import { AttendanceModule } from '../modules/attendance/attendance.module';
 
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true }),
     FirebaseModule,
-    StudentsModule
+    StudentsModule,
+    AttendanceModule
   ],
   controllers: [AppController],
   providers: [AppService],
