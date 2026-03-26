@@ -64,4 +64,56 @@ export class AttendanceService {
       throw new InternalServerErrorException('Erro ao buscar o histórico de presenças.');
     }
   }
+
+  async processDailyAbsences() {
+    try {
+      const db = this.firebaseService.getFirestore();
+      
+      const today = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }).split(' ')[0];
+
+      const attendancesSnap = await db.collection('attendances').get();
+      const presentStudentIds = new Set(); 
+      
+      attendancesSnap.forEach(doc => {
+        const data = doc.data() as any;
+        if (data.timestamp && data.timestamp.startsWith(today) && data.type === 'entry') {
+          presentStudentIds.add(data.studentId);
+        }
+      });
+
+      const studentsSnap = await db.collection('students').where('status', '==', 'active').get();
+
+      let faltasAplicadas = 0;
+
+      for (const doc of studentsSnap.docs) {
+        const studentId = doc.id;
+        
+        if (!presentStudentIds.has(studentId)) {
+          const studentData = doc.data() as any;
+          const newAbsences = (studentData.absences || 0) + 1;
+          
+          let newStatus = 'active';
+          
+          if (newAbsences >= 2) {
+            newStatus = 'alert'; 
+          }
+
+          await db.collection('students').doc(studentId).update({
+            absences: newAbsences,
+            status: newStatus
+          });
+          
+          faltasAplicadas++;
+        }
+      }
+
+      return { 
+        message: `Robô rodou com sucesso! Data: ${today}. ${faltasAplicadas} faltas foram aplicadas automaticamente.` 
+      };
+
+    } catch (error) {
+      console.error('Erro no robô de faltas:', error);
+      throw new InternalServerErrorException('Falha ao processar faltas diárias.');
+    }
+  }
 }

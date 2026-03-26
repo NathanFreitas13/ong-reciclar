@@ -15,4 +15,9 @@ export class AttendanceController {
   findAll() {
     return this.attendanceService.findAll();
   }
+
+  @Get('process-absences')
+  processDailyAbsences() {
+    return this.attendanceService.processDailyAbsences();
+  }
 }
