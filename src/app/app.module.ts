@@ -5,12 +5,14 @@ import { AppService } from './app.service';
 import { FirebaseModule } from '../firebase/firebase.module';
 import { StudentsModule } from '../modules/students/students.module';
 import { AttendanceModule } from '../modules/attendance/attendance.module';
+import { AuthModule } from '../modules/auth/auth.module';
 
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true }),
     FirebaseModule,
     StudentsModule,
-    AttendanceModule
+    AttendanceModule,
+    AuthModule
   ],
   controllers: [AppController],
   providers: [AppService],
