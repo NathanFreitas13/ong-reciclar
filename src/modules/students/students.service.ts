@@ -77,6 +77,16 @@ export class StudentsService {
       }
 
       const studentData = studentSnap.data() as any;
+      const today = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }).split(',')[0];
+
+      await db.collection('absences').add({
+        studentId: studentId,
+        studentName: studentData.fullName,
+        className: studentData.className || 'Sem turma',
+        date: today,
+        status: 'Não abonada',
+        createdAt: new Date().toISOString()
+      });
       
       const newAbsences = (studentData.absences || 0) + 1;
       let newStatus = studentData.status;

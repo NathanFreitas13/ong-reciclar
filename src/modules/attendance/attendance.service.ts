@@ -67,6 +67,12 @@ export class AttendanceService {
 
   async processDailyAbsences() {
     try {
+
+      const currentday = new Date().getDay();
+      if (currentday === 0 || currentday === 6) {
+        return { message: 'O robô de faltas não roda aos sábados e domingos.' };
+       }
+
       const db = this.firebaseService.getFirestore();
       
       const today = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }).split(' ')[0];
@@ -81,7 +87,7 @@ export class AttendanceService {
         }
       });
 
-      const studentsSnap = await db.collection('students').where('status', '==', 'active').get();
+      const studentsSnap = await db.collection('students').where('status', 'in', ['active', 'alert']).get();
 
       let faltasAplicadas = 0;
 
@@ -90,11 +96,20 @@ export class AttendanceService {
         
         if (!presentStudentIds.has(studentId)) {
           const studentData = doc.data() as any;
+
+          await db.collection('absences').add({
+            studentId: studentId,
+            studentName: studentData.fullName,
+            className: studentData.className || 'Sem turma',
+            date: today,
+            status: 'Não abonada',
+            createdAt: new Date().toISOString()
+          });
+
           const newAbsences = (studentData.absences || 0) + 1;
+          let newStatus = studentData.status;
           
-          let newStatus = 'active';
-          
-          if (newAbsences >= 2) {
+          if (newAbsences >= 2 && newStatus !== 'inactive') {
             newStatus = 'alert'; 
           }
 
@@ -108,12 +123,32 @@ export class AttendanceService {
       }
 
       return { 
-        message: `Robô rodou com sucesso! Data: ${today}. ${faltasAplicadas} faltas foram aplicadas automaticamente.` 
+        message: `Robô rodou com sucesso! Data: ${today} ${faltasAplicadas} faltas foram aplicadas, e registradas no histórico.` 
       };
 
     } catch (error) {
       console.error('Erro no robô de faltas:', error);
       throw new InternalServerErrorException('Falha ao processar faltas diárias.');
+    }
+  }
+
+  async getAbsenceHistory() {
+    try {
+      const db = this.firebaseService.getFirestore();
+      const absencesSnap = await db.collection('absences').orderBy('createdAt', 'desc').get();
+      const history: any[] = [];
+
+      absencesSnap.forEach(doc => {
+        history.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
+
+      return history;
+    } catch (error) {
+      console.error('Erro ao buscar histórico de faltas:', error);
+      throw new InternalServerErrorException('Falha ao buscar o histórico de faltas.');
     }
   }
 }

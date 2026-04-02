@@ -6,6 +6,11 @@ import { CreateAttendanceDto } from './dto/create-attendance.dto';
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 
+  @Get('absences/history')
+  getAbsenceHistory() {
+    return this.attendanceService.getAbsenceHistory();
+  }
+
   @Post()
   register(@Body() createAttendanceDto: CreateAttendanceDto) {
     return this.attendanceService.register(createAttendanceDto);
