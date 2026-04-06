@@ -151,4 +151,57 @@ export class AttendanceService {
       throw new InternalServerErrorException('Falha ao buscar o histórico de faltas.');
     }
   }
+
+  async justifyAbsence(absenceId: string) {
+    try {
+      const db = this.firebaseService.getFirestore();
+      
+      const absenceRef = db.collection('absences').doc(absenceId);
+      const absenceSnap = await absenceRef.get();
+
+      if (!absenceSnap.exists) {
+        throw new NotFoundException('Recibo de falta não encontrado.');
+      }
+
+      const absenceData = absenceSnap.data() as any;
+
+      if (absenceData.status === 'Abonada') {
+        return { message: 'Esta falta já foi abonada anteriormente.' };
+      }
+
+      await absenceRef.update({
+        status: 'Abonada',
+        justifiedAt: new Date().toISOString()
+      });
+
+      const studentRef = db.collection('students').doc(absenceData.studentId);
+      const studentSnap = await studentRef.get();
+      
+      if (studentSnap.exists) {
+        const studentData = studentSnap.data() as any;
+        const currentAbsences = studentData.absences || 0;
+        
+        const newAbsences = Math.max(0, currentAbsences - 1); 
+        let newStatus = studentData.status;
+
+        if (newAbsences < 2 && newStatus === 'alert') {
+          newStatus = 'active';
+        }
+
+        await studentRef.update({
+          absences: newAbsences,
+          status: newStatus
+        });
+      }
+
+      return { 
+        message: `Falta de ${absenceData.studentName} abonada com sucesso!`,
+        status: 'Abonada'
+      };
+
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      throw new InternalServerErrorException('Erro ao abonar a falta.');
+    }
+  }
 }
