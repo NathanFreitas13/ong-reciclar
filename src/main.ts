@@ -1,7 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { apiReference } from '@scalar/nestjs-api-reference';
 import { title } from 'process';
 
 async function bootstrap() {
@@ -14,7 +13,10 @@ async function bootstrap() {
     .setDescription('API para gerenciamento de alunos, turmas e presenças do Instituto Reciclar')
     .setVersion('1.0')
     .build();
+
   const document = SwaggerModule.createDocument(app, config);
+
+  const { apiReference } = await import('@scalar/nestjs-api-reference');
 
   app.use(
     '/docs',
