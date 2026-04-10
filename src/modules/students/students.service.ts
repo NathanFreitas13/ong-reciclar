@@ -9,10 +9,20 @@ export class StudentsService {
   async create(createStudentDto: CreateStudentDto) {
     try {
       const db = this.firebaseService.getFirestore();
+
+      const classRef = await db.collection('classes')
+        .where('name', '==', createStudentDto.className)
+        .where('shift', '==', createStudentDto.shift)
+        .get();
+
+        if (classRef.empty) {
+          throw new NotFoundException (`Turma "${createStudentDto.className}" com turno "${createStudentDto.shift}" não encontrada. Por favor, cadastre a turma antes de cadastrar o aluno.`);
+        }
       
       const newStudent = {
         fullName: createStudentDto.fullName,
         className: createStudentDto.className,
+        shift: createStudentDto.shift,
         expirationYear: createStudentDto.expirationYear,
         status: 'active',
         absences: 0,
@@ -83,6 +93,7 @@ export class StudentsService {
         studentId: studentId,
         studentName: studentData.fullName,
         className: studentData.className || 'Sem turma',
+        shift: studentData.shift || 'Sem turno',
         date: today,
         status: 'Não abonada',
         createdAt: new Date().toISOString()
