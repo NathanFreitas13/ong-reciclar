@@ -19,7 +19,7 @@ export class AttendanceService {
 
       const studentData = studentSnap.data() as any;
 
-      if (studentData.status !== 'active') {
+      if (studentData.status !== 'ativo') {
         throw new BadRequestException('Acesso Negado: Este aluno está inativo.');
       }
 
@@ -87,7 +87,7 @@ export class AttendanceService {
         }
       });
 
-      const studentsSnap = await db.collection('students').where('status', 'in', ['active', 'alert']).get();
+      const studentsSnap = await db.collection('students').where('status', 'in', ['ativo', 'alerta']).get();
 
       let faltasAplicadas = 0;
 
@@ -109,8 +109,8 @@ export class AttendanceService {
           const newAbsences = (studentData.absences || 0) + 1;
           let newStatus = studentData.status;
           
-          if (newAbsences >= 2 && newStatus !== 'inactive') {
-            newStatus = 'alert'; 
+          if (newAbsences >= 2 && newStatus !== 'inativo') {
+            newStatus = 'alerta'; 
           }
 
           await db.collection('students').doc(studentId).update({
@@ -184,8 +184,8 @@ export class AttendanceService {
         const newAbsences = Math.max(0, currentAbsences - 1); 
         let newStatus = studentData.status;
 
-        if (newAbsences < 2 && newStatus === 'alert') {
-          newStatus = 'active';
+        if (newAbsences < 2 && newStatus === 'alerta') {
+          newStatus = 'ativo';
         }
 
         await studentRef.update({

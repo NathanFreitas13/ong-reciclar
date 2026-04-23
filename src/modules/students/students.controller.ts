@@ -24,13 +24,13 @@ export class StudentsController {
   }
 
   @Patch(':id/status')
-  @ApiOperation({ summary: 'Altera o status do aluno (active/inactive)' })
+  @ApiOperation({ summary: 'Altera o status do aluno (ativo/inativo)' })
   @ApiParam({ name: 'id', description: 'ID do aluno no banco de dados' })
   @ApiResponse({ status: 200, description: 'Status do aluno atualizado com sucesso.' })
   @ApiResponse({ status: 404, description: 'Aluno não encontrado.' })
   updateStatus(
     @Param('id') id: string,
-    @Body('status') status: 'active' | 'inactive',
+    @Body('status') status: 'ativo' | 'inativo',
   ) {
     return this.studentsService.updateStatus(id, status);
   }

@@ -24,7 +24,7 @@ export class StudentsService {
         className: createStudentDto.className,
         shift: createStudentDto.shift,
         expirationYear: createStudentDto.expirationYear,
-        status: 'active',
+        status: 'ativo',
         absences: 0,
         createdAt: new Date().toISOString(),
       };
@@ -42,7 +42,7 @@ export class StudentsService {
     }
   }
 
-  async updateStatus(studentId: string, newStatus: 'active' | 'inactive') {
+  async updateStatus(studentId: string, newStatus: 'ativo' | 'inativo') {
     try {
       const db = this.firebaseService.getFirestore();
       
@@ -102,8 +102,8 @@ export class StudentsService {
       const newAbsences = (studentData.absences || 0) + 1;
       let newStatus = studentData.status;
 
-      if (newAbsences >= 2 && newStatus !== 'inactive') {
-        newStatus = 'alert';
+      if (newAbsences >= 2 && newStatus !== 'inativo') {
+        newStatus = 'alerta';
       }
 
       await studentRef.update({
@@ -147,8 +147,8 @@ export class StudentsService {
       const newAbsences = currentAbsences - 1;
       let newStatus = studentData.status;
 
-      if (newAbsences < 2 && newStatus === 'alert') {
-        newStatus = 'active';
+      if (newAbsences < 2 && newStatus === 'alerta') {
+        newStatus = 'ativo';
       }
 
       await studentRef.update({

@@ -58,7 +58,7 @@ export class ClassesService {
 
       const [classesSnap, studentsSnap, attendancesSnap, absencesSnap] = await Promise.all([
         db.collection('classes').get(),
-        db.collection('students').where('status', 'in', ['active', 'alert']).get(),
+        db.collection('students').where('status', 'in', ['ativo', 'alerta']).get(),
         db.collection('attendances').where('type', '==', 'entry').get(),
         db.collection('absences').where('status', '==', 'Não abonada').get()
       ]);
