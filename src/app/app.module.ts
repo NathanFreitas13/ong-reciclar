@@ -7,6 +7,7 @@ import { StudentsModule } from '../modules/students/students.module';
 import { AttendanceModule } from '../modules/attendance/attendance.module';
 import { AuthModule } from '../modules/auth/auth.module';
 import { ClassesModule } from '../modules/classes/classes.module';
+import { DashboardModule } from '../modules/dashboard/dashboard.module';
 
 
 @Module({
@@ -15,7 +16,8 @@ import { ClassesModule } from '../modules/classes/classes.module';
     StudentsModule,
     AttendanceModule,
     AuthModule,
-    ClassesModule
+    ClassesModule,
+    DashboardModule
   ],
   controllers: [AppController],
   providers: [AppService],
