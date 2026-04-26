@@ -19,7 +19,7 @@ export class AttendanceService {
 
       const studentData = studentSnap.data() as any;
 
-      if (studentData.status !== 'ativo') {
+      if (studentData.status === 'inativo') {
         throw new BadRequestException('Acesso Negado: Este aluno está inativo.');
       }
 
