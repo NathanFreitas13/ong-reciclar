@@ -204,4 +204,39 @@ export class AttendanceService {
       throw new InternalServerErrorException('Erro ao abonar a falta.');
     }
   }
+
+  async getHistoryFouls() {
+    try {
+      const db = this.firebaseService.getFirestore();
+
+      const [attendancesSnap, absencesSnap] = await Promise.all([
+        db.collection('attendances').where('type', '==', 'entry').get(),
+        db.collection('absences').get()
+      ]);
+
+      const totalPresences = attendancesSnap.size;
+
+      let justifyedCount = 0;
+      let unjustifyedCount = 0;
+
+      absencesSnap.forEach(doc => {
+        const data = doc.data() as any;
+        if (data.status === 'Abonada') {
+          justifyedCount += 1;
+        } else {
+          unjustifyedCount += 1;
+        }
+      });
+
+      return {
+        presences: totalPresences,
+        absence: justifyedCount + unjustifyedCount,
+        justifyed: justifyedCount,
+        unjustifyed: unjustifyedCount
+      };
+    } catch (error) {
+      console.error('Erro ao gerar resumo do histórico de faltas:', error);
+      throw new InternalServerErrorException('Falha ao calcular o resumo de faltas e presenças.');
+    }
+  }
 }

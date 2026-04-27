@@ -28,6 +28,13 @@ export class AttendanceController {
   processDailyAbsences() {
     return this.attendanceService.processDailyAbsences();
   }
+
+  @Get('historyfouls')
+  @ApiOperation({ summary: 'Retorna o resumo total para os cards do Histórico de Faltas' })
+  @ApiResponse({ status: 200, description: 'Resumo calculado com sucesso.' })
+  getHistoryFouls() {
+    return this.attendanceService.getHistoryFouls();
+  }
   
   @Post()
   @ApiOperation({ summary: 'Registra uma entrada ou saída de um aluno (Catraca/Leitura do QR Code)' })
