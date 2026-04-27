@@ -21,6 +21,7 @@ export class DashboardService {
         const student = doc.data() as any;
         studentsMap.set(doc.id, {
           id: doc.id,
+          qrcodeId: doc.id,
           fullName: student.fullName,
           className: student.className,
           shift: student.shift,
