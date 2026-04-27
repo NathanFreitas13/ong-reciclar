@@ -56,11 +56,9 @@ export class ClassesService {
     try {
       const db = this.firebaseService.getFirestore();
 
-      const [classesSnap, studentsSnap, attendancesSnap, absencesSnap] = await Promise.all([
+      const [classesSnap, studentsSnap] = await Promise.all([
         db.collection('classes').get(),
         db.collection('students').where('status', 'in', ['ativo', 'alerta']).get(),
-        db.collection('attendances').where('type', '==', 'entry').get(),
-        db.collection('absences').where('status', '==', 'Não abonada').get()
       ]);
 
       const classesMap = new Map<string, any>();
@@ -72,9 +70,7 @@ export class ClassesService {
           classId: doc.id,
           className: cls.name,
           shift: cls.shift,
-          totalStudents: 0,
-          totalPresences: 0,
-          totalAbsences: 0,
+          totalStudents: 0
         });
       });
 
@@ -84,23 +80,7 @@ export class ClassesService {
         if (classesMap.has(groupKey)) classesMap.get(groupKey).totalStudents += 1;
       });
 
-      attendancesSnap.forEach(doc => {
-        const data = doc.data() as any;
-        const groupKey = `${data.className}_${data.shift}`;
-        if (classesMap.has(groupKey)) classesMap.get(groupKey).totalPresences += 1;
-      });
-
-      absencesSnap.forEach(doc => {
-        const data = doc.data() as any;
-        const groupKey = `${data.className}_${data.shift}`;
-        if (classesMap.has(groupKey)) classesMap.get(groupKey).totalAbsences += 1;
-      });
-
-      const result = Array.from(classesMap.values()).map(cls => {
-        const totalEvents = cls.totalPresences + cls.totalAbsences;
-        const frequency = totalEvents === 0 ? 100 : Math.round((cls.totalPresences / totalEvents) * 100);
-        return { ...cls, frequency: `${frequency}%` };
-      });
+      const result = Array.from(classesMap.values());
 
       return result.sort((a, b) => {
         if (a.className === b.className) return a.shift.localeCompare(b.shift);
