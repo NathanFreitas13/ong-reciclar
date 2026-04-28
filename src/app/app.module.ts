@@ -8,16 +8,17 @@ import { AttendanceModule } from '../modules/attendance/attendance.module';
 import { AuthModule } from '../modules/auth/auth.module';
 import { ClassesModule } from '../modules/classes/classes.module';
 import { DashboardModule } from '../modules/dashboard/dashboard.module';
-
+import { AuthGuard } from '../guards/auth.guard';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }),
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     FirebaseModule,
     StudentsModule,
     AttendanceModule,
     AuthModule,
     ClassesModule,
-    DashboardModule
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],
