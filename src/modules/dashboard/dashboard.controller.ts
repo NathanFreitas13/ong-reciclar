@@ -8,7 +8,7 @@ import { AuthGuard } from '../../guards/auth.guard';
 export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 
-  @UseGuards(AuthGuard)
+  //@UseGuards(AuthGuard)
   @Get('students-metrics')
   @ApiOperation({
     summary: 'Retorna a lista de alunos com os cálculos de presença e faltas',
