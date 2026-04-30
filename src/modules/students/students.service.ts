@@ -212,4 +212,56 @@ export class StudentsService {
       throw new InternalServerErrorException('Erro ao remover a falta.');
     }
   }
+
+  async update(studentId: string, updateStudentDto: any) { 
+    try {
+      const db = this.firebaseService.getFirestore();
+      const studentRef = db.collection('students').doc(studentId);
+      const studentSnap = await studentRef.get();
+
+      if (!studentSnap.exists) {
+        throw new NotFoundException('Aluno não encontrado no sistema.');
+      }
+
+      const currentStudent = studentSnap.data() as any;
+
+      const { fullName, expirationYear, className, shift } = updateStudentDto;
+
+      const updateData: any = {};
+      if (fullName) updateData.fullName = fullName;
+      if (expirationYear) updateData.expirationYear = expirationYear;
+      if (className) updateData.className = className;
+      if (shift) updateData.shift = shift;
+
+      if (className || shift) {
+        const newClassName = className || currentStudent.className;
+        const newShift = shift || currentStudent.shift;
+
+        const classRef = await db.collection('classes')
+          .where('name', '==', newClassName)
+          .where('shift', '==', newShift)
+          .get();
+
+        if (classRef.empty) {
+          throw new NotFoundException(`Turma "${newClassName}" com turno "${newShift}" não encontrada. Cadastre a turma antes.`);
+        }
+      }
+
+      if (Object.keys(updateData).length === 0) {
+        return { message: 'Nenhum dado válido enviado para atualização.' };
+      }
+
+      updateData.updatedAt = new Date().toISOString();
+      await studentRef.update(updateData);
+
+      return {
+        message: 'Dados do aluno atualizados com sucesso!'
+      };
+
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      console.error('Erro ao atualizar aluno:', error);
+      throw new InternalServerErrorException('Não foi possível atualizar os dados do aluno.');
+    }
+  }
 }

@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Patch, Body, Param } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Body, Param, Put } from '@nestjs/common';
 import { StudentsService } from './students.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -51,5 +51,11 @@ export class StudentsController {
   @ApiResponse({ status: 404, description: 'Aluno não encontrado.' })
   removeAbsence(@Param('id') id: string) {
     return this.studentsService.removeAbsence(id);
+  }
+
+  @Put(':id')
+  @ApiOperation({ summary: 'Atualiza dados cadastrais do aluno (nome, turma, turno e validade)' })
+  update(@Param('id') id: string, @Body() updateStudentDto: any) {
+    return this.studentsService.update(id, updateStudentDto);
   }
 }
