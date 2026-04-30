@@ -63,16 +63,61 @@ export class StudentsService {
   async findAll() {
     try {
       const db = this.firebaseService.getFirestore();
-      const snapshot = await db.collection('students').get();
       
-      const students: any[] = [];
-      snapshot.forEach(doc => {
-        students.push({ id: doc.id, ...doc.data() });
+      const [studentsSnap, attendancesSnap, absencesSnap] = await Promise.all([
+        db.collection('students').get(),
+        db.collection('attendances').where('type', '==', 'entry').get(),
+        db.collection('absences').get()
+      ]);
+
+      const studentsMap = new Map<string, any>();
+
+      studentsSnap.forEach(doc => {
+        const student = doc.data() as any;
+        studentsMap.set(doc.id, {
+          id: doc.id,
+          qrcodeId: doc.id,
+          ...student,
+          presences: 0,
+          absences: 0,
+          justified: 0,
+          frequency: '100.00%'
+        });
       });
 
-      return students;
-    } catch (error) {
-      throw new InternalServerErrorException('Não foi possível listar os alunos.');
+      attendancesSnap.forEach(doc => {
+        const data = doc.data() as any;
+        if (studentsMap.has(data.studentId)) {
+          studentsMap.get(data.studentId).presences += 1;
+        }
+      });
+
+      absencesSnap.forEach(doc => {
+        const data = doc.data() as any;
+          if (studentsMap.has(data.studentId)) {
+            if (data.status === 'Abonada') {
+              studentsMap.get(data.studentId).justified += 1;
+            } else {
+              studentsMap.get(data.studentId).absences += 1;
+            }
+          }
+      });
+
+      const students = Array.from(studentsMap.values()).map(student => {
+        const totalEvents = student.presences + student.absences;
+        const frequency = totalEvents === 0 ? 100 : (student.presences / totalEvents) * 100;
+
+      return {
+        ...student,
+        frequency: `${frequency.toFixed(2)}%`
+      };
+    });
+
+    return students.sort((a, b) => a.fullName.localeCompare(b.fullName));
+
+  } catch (error) {
+    console.error('Erro ao buscar alunos:', error);
+    throw new InternalServerErrorException('Não foi possível buscar os alunos.');
     }
   }
 
