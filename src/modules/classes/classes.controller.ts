@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import { Controller, Get, Post, Body, UseGuards, Put, Param, Delete } from '@nestjs/common';
-=======
-import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
->>>>>>> 646df1c195678723f7a012cd2f4c33749f7278df
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ClassesService } from './classes.service';
 import { CreateClassDto } from './create-class.dto';
