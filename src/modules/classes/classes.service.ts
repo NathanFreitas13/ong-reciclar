@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, ConflictException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { FirebaseService } from '../../firebase/firebase.service';
 import { CreateClassDto } from './create-class.dto';
 
@@ -89,6 +89,104 @@ export class ClassesService {
 
     } catch (error) {
       throw new InternalServerErrorException('Falha ao processar os dados das turmas.');
+    }
+  }
+
+  async update(classId: string, updateData: any) {
+    try {
+      const db = this.firebaseService.getFirestore();
+      const classRef = db.collection('classes').doc(classId);
+      const classSnap = await classRef.get();
+
+      if (!classSnap.exists) {
+        throw new NotFoundException('Turma não encontrada.');
+      }
+
+      const currentClass = classSnap.data() as any;
+      const oldName = currentClass.name;
+      const oldShift = currentClass.shift;
+
+      const newName = updateData.name || oldName;
+      const newShift = updateData.shift || oldShift;
+
+      if (newName !== oldName || newShift !== oldShift) {
+        const checkDuplicate = await db.collection('classes')
+          .where('name', '==', newName)
+          .where('shift', '==', newShift)
+          .get();
+
+        if (!checkDuplicate.empty) {
+          throw new ConflictException(`A turma "${newName}" no turno "${newShift}" já existe.`);
+        }
+      }
+
+      const batch = db.batch();
+
+      batch.update(classRef, {
+        name: newName,
+        shift: newShift,
+        updatedAt: new Date().toISOString()
+      });
+
+      if (newName !== oldName || newShift !== oldShift) {
+        const studentsSnap = await db.collection('students')
+          .where('className', '==', oldName)
+          .where('shift', '==', oldShift)
+          .get();
+
+        studentsSnap.forEach(studentDoc => {
+          batch.update(studentDoc.ref, {
+            className: newName,
+            shift: newShift,
+            updatedAt: new Date().toISOString()
+          });
+        });
+      }
+
+      await batch.commit();
+
+      return {
+        message: 'Turma (e alunos vinculados) atualizada com sucesso!'
+      };
+
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof ConflictException) throw error;
+      console.error('Erro ao atualizar turma:', error);
+      throw new InternalServerErrorException('Não foi possível atualizar a turma.');
+    }
+  }
+
+  async remove(classId: string) {
+    try {
+      const db = this.firebaseService.getFirestore();
+      const classRef = db.collection('classes').doc(classId);
+      const classSnap = await classRef.get();
+
+      if (!classSnap.exists) {
+        throw new NotFoundException('Turma não encontrada.');
+      }
+
+      const classData = classSnap.data() as any;
+
+      const studentsSnap = await db.collection('students')
+        .where('className', '==', classData.name)
+        .where('shift', '==', classData.shift)
+        .get();
+
+      if (!studentsSnap.empty) {
+        throw new BadRequestException(
+          'Não é possível excluir uma turma com alunos cadastrados.'
+        );
+      }
+
+      await classRef.delete();
+
+      return { message: 'Turma excluída com sucesso!' };
+
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof BadRequestException) throw error;
+      console.error('Erro ao deletar turma:', error);
+      throw new InternalServerErrorException('Não foi possível excluir a turma.');
     }
   }
 }

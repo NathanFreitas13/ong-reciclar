@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Put, Param, Delete } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ClassesService } from './classes.service';
 import { CreateClassDto } from './create-class.dto';
+import { AuthGuard } from '../../guards/auth.guard';
 
 @ApiTags('Classes')
+@UseGuards(AuthGuard)
 @Controller('classes')
 export class ClassesController {
   constructor(private readonly classesService: ClassesService) {}
@@ -28,5 +30,17 @@ export class ClassesController {
   @ApiResponse({ status: 409, description: 'Conflito: Turma já existe neste turno.' })
   create(@Body() createClassDto: CreateClassDto) {
     return this.classesService.create(createClassDto);
+  }
+
+  @Put(':id')
+  @ApiOperation({ summary: 'Atualiza a turma e os alunos vinculados a ela' })
+  update(@Param('id') id: string, @Body() updateClassDto: any) {
+    return this.classesService.update(id, updateClassDto);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Deleta uma turma (bloqueado se houver alunos)' })
+  remove(@Param('id') id: string) {
+    return this.classesService.remove(id);
   }
 }
