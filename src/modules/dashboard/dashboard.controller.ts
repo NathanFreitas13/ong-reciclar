@@ -4,11 +4,11 @@ import { DashboardService } from './dashboard.service';
 import { AuthGuard } from '../../guards/auth.guard';
 
 @ApiTags('Dashboard')
+@UseGuards(AuthGuard)
 @Controller('dashboard')
 export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 
-  //@UseGuards(AuthGuard)
   @Get('students-metrics')
   @ApiOperation({
     summary: 'Retorna a lista de alunos com os cálculos de presença e faltas',

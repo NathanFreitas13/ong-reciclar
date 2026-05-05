@@ -1,9 +1,11 @@
-import { Controller, Post, Get, Body, Patch, Param } from '@nestjs/common';
+import { Controller, Post, Get, Body, Patch, Param, UseGuards } from '@nestjs/common';
 import { AttendanceService } from './attendance.service';
 import { CreateAttendanceDto } from './dto/create-attendance.dto';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { AuthGuard } from '../../guards/auth.guard';
 
 @ApiTags('Attendance')
+@UseGuards(AuthGuard)
 @Controller('attendance')
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
