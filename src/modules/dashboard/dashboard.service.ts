@@ -1,5 +1,6 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { FirebaseService } from '../../firebase/firebase.service';
+import * as ExcelJS from 'exceljs';
 
 @Injectable()
 export class DashboardService {
@@ -66,6 +67,53 @@ export class DashboardService {
     } catch (error) {
       console.error('Erro ao gerar métricas do dashboard:', error);
       throw new InternalServerErrorException('Falha ao processar os dados do dashboard.');
+    }
+  }
+
+  async exportStudentsToExcel() {
+    try {
+      const students = await this.getStudentsMetrics();
+
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Frequência de Alunos');
+
+      worksheet.columns = [
+        { header: 'Nome do Aluno', key: 'fullName', width: 35 },
+        { header: 'Turma', key: 'className', width: 20 },
+        { header: 'Turno', key: 'shift', width: 15 },
+        { header: 'Presenças', key: 'presences', width: 15 },
+        { header: 'Faltas', key: 'absences', width: 15 },
+        { header: 'Abonadas', key: 'justified', width: 15 },
+        { header: 'Frequência', key: 'frequency', width: 20 },
+        { header: 'Status', key: 'status', width: 20 },
+      ];
+
+      worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } }; // Fonte branca negrito
+      worksheet.getRow(1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF0D47A1' }
+      };
+      worksheet.getRow(1).alignment = { horizontal: 'center', vertical: 'middle' };
+
+      worksheet.addRows(students);
+
+      worksheet.eachRow((row, rowNumber) => {
+        if (rowNumber > 1) { // Pula o cabeçalho
+          row.getCell('presences').alignment = { horizontal: 'center' };
+          row.getCell('absences').alignment = { horizontal: 'center' };
+          row.getCell('justified').alignment = { horizontal: 'center' };
+          row.getCell('frequency').alignment = { horizontal: 'center' };
+          row.getCell('status').alignment = { horizontal: 'center' };
+        }
+      });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      return buffer;
+
+    } catch (error) {
+      console.error('Erro ao gerar o Excel:', error);
+      throw new InternalServerErrorException('Falha ao gerar o arquivo de exportação.');
     }
   }
 }
