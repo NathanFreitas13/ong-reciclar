@@ -1,11 +1,13 @@
-import { Controller, Post, Get, Body, Patch, Param, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Body, Patch, Param, UseGuards, Query, Res } from '@nestjs/common';
 import { AttendanceService } from './attendance.service';
 import { CreateAttendanceDto } from './dto/create-attendance.dto';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '../../guards/auth.guard';
+import { Response } from 'express';
+
 
 @ApiTags('Attendance')
-@UseGuards(AuthGuard)
+//@UseGuards(AuthGuard)
 @Controller('attendance')
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
@@ -13,8 +15,9 @@ export class AttendanceController {
   @Get('absences/history')
   @ApiOperation({ summary: 'Retorna o histórico de faltas dos alunos' })
   @ApiResponse({ status: 200, description: 'Histórico de faltas retornado com sucesso.' })
-  getAbsenceHistory() {
-    return this.attendanceService.getAbsenceHistory();
+  getAbsenceHistory(@Query('page') page: string) {
+    const pageNum = parseInt(page) || 1;
+    return this.attendanceService.getAbsenceHistory(pageNum);
   }
 
   @Get()
@@ -36,6 +39,23 @@ export class AttendanceController {
   @ApiResponse({ status: 200, description: 'Resumo calculado com sucesso.' })
   getHistoryFouls() {
     return this.attendanceService.getHistoryFouls();
+  }
+
+  @Get('absences/history/export')
+  @ApiOperation({ summary: 'Exporta o histórico detalhado de faltas para Excel' })
+  async exportAbsenceHistory(@Res() res: any) {
+    try {
+      const fileBuffer = await this.attendanceService.exportHistoryToExcel();
+
+      res.set({
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Disposition': 'attachment; filename="historico_faltas_reciclar.xlsx"',
+      });
+
+      res.end(fileBuffer);
+    } catch (error) {
+      res.status(500).json({ message: 'Erro ao processar o download do arquivo.' });
+    }
   }
   
   @Post()

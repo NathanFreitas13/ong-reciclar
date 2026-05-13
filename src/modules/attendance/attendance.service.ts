@@ -1,6 +1,7 @@
 import { Injectable, InternalServerErrorException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { CreateAttendanceDto } from './dto/create-attendance.dto';
 import { FirebaseService } from '../../firebase/firebase.service';
+import * as ExcelJS from 'exceljs';
 
 @Injectable()
 export class AttendanceService {
@@ -132,20 +133,38 @@ export class AttendanceService {
     }
   }
 
-  async getAbsenceHistory() {
+  async getAbsenceHistory(page: number = 1) {
     try {
       const db = this.firebaseService.getFirestore();
-      const absencesSnap = await db.collection('absences').orderBy('createdAt', 'desc').get();
-      const history: any[] = [];
+      const limit = 30;
 
-      absencesSnap.forEach(doc => {
-        history.push({
-          id: doc.id,
-          ...doc.data()
-        });
-      });
+      const totalSnap = await db.collection('absences').count().get();
+      const totalItems = totalSnap.data().count;
 
-      return history;
+      let query = db.collection('absences')
+        .orderBy('createdAt', 'desc')
+        .limit(limit);
+
+      if (page > 1) {
+        const offset = (page - 1) * limit;
+        query = query.offset(offset);
+      }
+
+      const absencesSnap = await query.get();
+      const data = absencesSnap.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      return {
+        data,
+        meta: {
+          totalItems,
+          itemsPerPage: limit,
+          totalPages: Math.ceil(totalItems / limit),
+          currentPage: page
+        }
+      };
     } catch (error) {
       console.error('Erro ao buscar histórico de faltas:', error);
       throw new InternalServerErrorException('Falha ao buscar o histórico de faltas.');
@@ -237,6 +256,42 @@ export class AttendanceService {
     } catch (error) {
       console.error('Erro ao gerar resumo do histórico de faltas:', error);
       throw new InternalServerErrorException('Falha ao calcular o resumo de faltas e presenças.');
+    }
+  }
+
+  async exportHistoryToExcel() {
+    try {
+      const db = this.firebaseService.getFirestore();
+      
+      const snapshot = await db.collection('absences').orderBy('date', 'desc').get();
+      const history = snapshot.docs.map(doc => doc.data());
+
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Histórico de Faltas');
+
+      worksheet.columns = [
+        { header: 'Data', key: 'date', width: 15 },
+        { header: 'Nome do Aluno', key: 'studentName', width: 35 },
+        { header: 'Turma', key: 'className', width: 20 },
+        { header: 'Turno', key: 'shift', width: 15 },
+        { header: 'Status da Falta', key: 'status', width: 20 },
+        { header: 'Registrado em', key: 'createdAt', width: 25 },
+      ];
+
+      worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      worksheet.getRow(1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFB71C1C' }
+      };
+
+      worksheet.addRows(history);
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      return buffer;
+    } catch (error) {
+      console.error('Erro ao exportar histórico:', error);
+      throw new InternalServerErrorException('Falha ao gerar excel do histórico.');
     }
   }
 }
