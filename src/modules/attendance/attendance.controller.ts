@@ -7,7 +7,7 @@ import { Response } from 'express';
 
 
 @ApiTags('Attendance')
-//@UseGuards(AuthGuard)
+@UseGuards(AuthGuard)
 @Controller('attendance')
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
