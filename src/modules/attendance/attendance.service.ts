@@ -133,10 +133,10 @@ export class AttendanceService {
     }
   }
 
-  async getAbsenceHistory(page: number = 1) {
+  async getAbsenceHistory(page: number = 1, qttd: number = 500) {
     try {
       const db = this.firebaseService.getFirestore();
-      const limit = 30;
+      const limit = qttd;
 
       const totalSnap = await db.collection('absences').count().get();
       const totalItems = totalSnap.data().count;
