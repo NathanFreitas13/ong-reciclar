@@ -47,16 +47,14 @@ export class AttendanceController {
 
   @Get('absences/history')
   @ApiOperation({ summary: 'Retorna o histórico de faltas dos alunos' })
-<<<<<<< HEAD
-  @ApiResponse({ status: 200, description: 'Histórico de faltas retornado com sucesso.' })
-  getAbsenceHistory(@Query('page') page: string, @Query('qttd') qttd: number) {
-=======
   @ApiResponse({
     status: 200,
     description: 'Histórico de faltas retornado com sucesso.',
   })
-  getAbsenceHistory(@Query('page') page: string) {
->>>>>>> df2996bb8ad34d503c45f2fbd3a8a85fd78c9976
+  getAbsenceHistory(
+    @Query('page') page: string,
+    @Query('qttd') qttd: number,
+  ) {
     const pageNum = parseInt(page) || 1;
     return this.attendanceService.getAbsenceHistory(pageNum, qttd);
   }
