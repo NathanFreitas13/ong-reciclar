@@ -1,4 +1,4 @@
-import { Controller, Get, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, Res, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { DashboardService } from './dashboard.service';
 import { AuthGuard } from '../../guards/auth.guard';
@@ -12,8 +12,9 @@ export class DashboardController {
   @Get('students-metrics')
   @ApiOperation({ summary: 'Retorna a lista de alunos com os cálculos de presença e faltas' })
   @ApiResponse({ status: 200, description: 'Métricas dos alunos calculadas com sucesso.' })
-  getStudentsMetrics() {
-    return this.dashboardService.getStudentsMetrics();
+  getStudentsMetrics(@Query('page') page: string) {
+    const pageNum = parseInt(page) || 1;
+    return this.dashboardService.getStudentsMetrics(pageNum);
   }
 
   @Get('export')

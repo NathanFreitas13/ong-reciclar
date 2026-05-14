@@ -6,7 +6,7 @@ import * as ExcelJS from 'exceljs';
 export class DashboardService {
   constructor(private readonly firebaseService: FirebaseService) {}
 
-  async getStudentsMetrics() {
+  async getStudentsMetrics(page?: number) {
     try {
       const db = this.firebaseService.getFirestore();
 
@@ -62,7 +62,26 @@ export class DashboardService {
         };
       });
 
-      return result.sort((a, b) => a.fullName.localeCompare(b.fullName));
+      const sortedResult = result.sort((a,b) => a.fullName.localeCompare(b.fullName));
+
+      if (!page) {
+        return sortedResult;
+      }
+
+      const limit = 15;
+      const totalItems = sortedResult.length;
+      const startIndex = (page - 1) * limit;
+      const paginatedData = sortedResult.slice(startIndex, startIndex + limit);
+
+      return {
+        data: paginatedData,
+        meta: {
+          totalItems,
+          itemsPerPage: limit,
+          totalPages: Math.ceil(totalItems / limit),
+          currentPage: page
+        }
+      };
 
     } catch (error) {
       console.error('Erro ao gerar métricas do dashboard:', error);
@@ -72,7 +91,7 @@ export class DashboardService {
 
   async exportStudentsToExcel() {
     try {
-      const students = await this.getStudentsMetrics();
+      const students = await this.getStudentsMetrics() as any[];
 
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('Frequência de Alunos');
@@ -88,7 +107,7 @@ export class DashboardService {
         { header: 'Status', key: 'status', width: 20 },
       ];
 
-      worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } }; // Fonte branca negrito
+      worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
       worksheet.getRow(1).fill = {
         type: 'pattern',
         pattern: 'solid',
@@ -99,7 +118,7 @@ export class DashboardService {
       worksheet.addRows(students);
 
       worksheet.eachRow((row, rowNumber) => {
-        if (rowNumber > 1) { // Pula o cabeçalho
+        if (rowNumber > 1) {
           row.getCell('presences').alignment = { horizontal: 'center' };
           row.getCell('absences').alignment = { horizontal: 'center' };
           row.getCell('justified').alignment = { horizontal: 'center' };
