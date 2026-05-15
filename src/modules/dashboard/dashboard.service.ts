@@ -6,7 +6,7 @@ import * as ExcelJS from 'exceljs';
 export class DashboardService {
   constructor(private readonly firebaseService: FirebaseService) {}
 
-  async getStudentsMetrics(page?: number) {
+  async getStudentsMetrics(page?: number, limit?: number, search?: string, className?: string, shift?: string) {
     try {
       const db = this.firebaseService.getFirestore();
 
@@ -62,13 +62,27 @@ export class DashboardService {
         };
       });
 
-      const sortedResult = result.sort((a,b) => a.fullName.localeCompare(b.fullName));
+      let sortedResult = result.sort((a,b) => a.fullName.localeCompare(b.fullName));
 
-      if (!page) {
+      if (search) {
+        const searchLower = search.toLowerCase();
+        sortedResult = sortedResult.filter(student =>
+          student.fullName.toLowerCase().includes(searchLower)
+        );
+      }
+
+      if (className) {
+        sortedResult = sortedResult.filter(student => student.className === className);
+      }
+
+      if (shift) {
+        sortedResult = sortedResult.filter(student => student.shift === shift);
+      }
+
+      if (!page || !limit) {
         return sortedResult;
       }
 
-      const limit = 15;
       const totalItems = sortedResult.length;
       const startIndex = (page - 1) * limit;
       const paginatedData = sortedResult.slice(startIndex, startIndex + limit);

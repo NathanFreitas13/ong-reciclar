@@ -12,9 +12,17 @@ export class DashboardController {
   @Get('students-metrics')
   @ApiOperation({ summary: 'Retorna a lista de alunos com os cálculos de presença e faltas' })
   @ApiResponse({ status: 200, description: 'Métricas dos alunos calculadas com sucesso.' })
-  getStudentsMetrics(@Query('page') page: string) {
-    const pageNum = parseInt(page) || 1;
-    return this.dashboardService.getStudentsMetrics(pageNum);
+  getStudentsMetrics(
+    @Query('page') page: string,
+    @Query('limit') limit: string,
+    @Query('search') search?: string,
+    @Query('className') className?: string,
+    @Query('shift') shift?: string
+  ) {
+    const pageNum = page ? parseInt(page) : undefined;
+    const limitNum = limit ? parseInt(limit) : undefined;
+
+    return this.dashboardService.getStudentsMetrics(pageNum, limitNum, search, className, shift);
   }
 
   @Get('export')
