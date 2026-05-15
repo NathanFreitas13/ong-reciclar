@@ -52,11 +52,19 @@ export class AttendanceController {
     description: 'Histórico de faltas retornado com sucesso.',
   })
   getAbsenceHistory(
-    @Query('page') page: string,
-    @Query('qttd') qttd: number,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+    @Query('className') className?: string,
+    @Query('shift') shift?: string,
+    @Query('status') status?: string,
+    @Query('date') date?: string,
   ) {
-    const pageNum = parseInt(page) || 1;
-    return this.attendanceService.getAbsenceHistory(pageNum, qttd);
+    const pageNum = page ? parseInt(page) : undefined;
+    const limitNum = limit ? parseInt(limit) : undefined;
+
+    return this.attendanceService.getAbsenceHistory(
+      pageNum, limitNum, search, className, shift, status, date,);
   }
 
   @Get('process-absences')

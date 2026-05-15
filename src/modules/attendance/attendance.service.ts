@@ -141,6 +141,7 @@ export class AttendanceService {
             studentId: studentId,
             studentName: studentData.fullName,
             className: studentData.className || 'Sem turma',
+            shift: studentData.shift || 'Sem turno',
             date: today,
             status: 'Não abonada',
             createdAt: new Date().toISOString(),
@@ -173,32 +174,55 @@ export class AttendanceService {
     }
   }
 
-  async getAbsenceHistory(page: number = 1, qttd: number = 500) {
+  async getAbsenceHistory(
+    page?: number,
+    limit?: number,
+    search?: string,
+    className?: string,
+    shift?: string,
+    status?: string,
+    date?: string,
+  ) {
     try {
       const db = this.firebaseService.getFirestore();
-      const limit = qttd;
 
-      const totalSnap = await db.collection('absences').count().get();
-      const totalItems = totalSnap.data().count;
+      const absencesSnap = await db.collection('absences').orderBy('createdAt', 'desc').get();
 
-      let query = db
-        .collection('absences')
-        .orderBy('createdAt', 'desc')
-        .limit(limit);
+      let history = absencesSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as any[];
 
-      if (page > 1) {
-        const offset = (page - 1) * limit;
-        query = query.offset(offset);
+      if (search) {
+        const searchLower = search.toLowerCase();
+        history = history.filter(absence =>
+          absence.studentName?.toLowerCase().includes(searchLower)
+        );
       }
 
-      const absencesSnap = await query.get();
-      const data = absencesSnap.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      if (className) {
+        history = history.filter(absence => absence.className === className);
+      }
+
+      if (shift) {
+        history = history.filter(absence => absence.shift === shift);
+      }
+
+      if (status) {
+        history = history.filter(absence => absence.status === status);
+      }
+
+      if (date) {
+        history = history.filter(absence => absence.date === date);
+      }
+
+      if (!page || !limit) {
+        return history;
+      }
+
+      const totalItems = history.length;
+      const startIndex = (page - 1) * limit;
+      const paginatedData = history.slice(startIndex, startIndex + limit);
 
       return {
-        data,
+        data: paginatedData,
         meta: {
           totalItems,
           itemsPerPage: limit,
@@ -305,13 +329,8 @@ export class AttendanceService {
 
   async exportHistoryToExcel() {
     try {
-      const db = this.firebaseService.getFirestore();
-
-      const snapshot = await db
-        .collection('absences')
-        .orderBy('date', 'desc')
-        .get();
-      const history = snapshot.docs.map((doc) => doc.data());
+      
+      const history = await this.getAbsenceHistory() as any[];
 
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('Histórico de Faltas');
