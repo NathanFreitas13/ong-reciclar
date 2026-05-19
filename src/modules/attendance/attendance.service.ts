@@ -86,17 +86,6 @@ export class AttendanceService {
     }
   }
 
-  async filterAbsences(
-    studentId?: string,
-    className?: string,
-    shift?: string,
-    status?: string,
-  ) {
-    const text = `Filtro recebido - studentId: ${studentId}, className: ${className}, shift: ${shift}, status: ${status}`;
-
-    return text;
-  }
-
   async processDailyAbsences() {
     try {
       const currentday = new Date().getDay();

@@ -30,21 +30,6 @@ export class AttendanceController {
     return this.attendanceService.findAll();
   }
 
-  @Get('absence-filter')
-  async filterAbsences(
-    @Query('studentId') studentId?: string,
-    @Query('className') className?: string,
-    @Query('shift') shift?: string,
-    @Query('status') status?: string,
-  ) {
-    return this.attendanceService.filterAbsences(
-      studentId,
-      className,
-      shift,
-      status,
-    );
-  }
-
   @Get('absences/history')
   @ApiOperation({ summary: 'Retorna o histórico de faltas dos alunos' })
   @ApiResponse({
